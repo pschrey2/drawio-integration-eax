@@ -1549,7 +1549,9 @@ Menus.prototype.addPopupMenuItems = function(menu, cell, evt)
         this.addPopupMenuArrangeItems(menu, cell, evt);
     }
 
-    // Only add your custom context menu items if cell is not null and has an id
+	console.log(evt)
+
+    // Only add custom context menu items if cell is not null and has an id
     if (cell && cell.id) {
         let contextOptions = getContextOptions(cell.id);
         if (contextOptions.length > 0) {
@@ -1604,7 +1606,8 @@ function getContextOptions(cellId) {
             'Load Processes',
             'Load Information Objects',
             'Load IT Components',
-			'Load Interfaced Applications',
+			'Load Linked Applications (through Interfaces)',
+
         ]
     }
     else if (objectType === 'itcomponents') {
