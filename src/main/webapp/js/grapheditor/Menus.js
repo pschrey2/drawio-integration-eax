@@ -1532,26 +1532,116 @@ Menus.prototype.createPopupMenu = function(menu, cell, evt)
  */
 Menus.prototype.addPopupMenuItems = function(menu, cell, evt)
 {
-	if (this.isShowHistoryItems())
-	{
-		this.addPopupMenuHistoryItems(menu, cell, evt);	
-	}
+    if (this.isShowHistoryItems())
+    {
+        this.addPopupMenuHistoryItems(menu, cell, evt);    
+    }
 
-	this.addPopupMenuEditItems(menu, cell, evt);
+    this.addPopupMenuEditItems(menu, cell, evt);
 
-	if (this.isShowStyleItems())
-	{
-		this.addPopupMenuStyleItems(menu, cell, evt);
-	}
+    if (this.isShowStyleItems())
+    {
+        this.addPopupMenuStyleItems(menu, cell, evt);
+    }
 
-	if (this.isShowArrangeItems())
-	{
-		this.addPopupMenuArrangeItems(menu, cell, evt);
-	}
+    if (this.isShowArrangeItems())
+    {
+        this.addPopupMenuArrangeItems(menu, cell, evt);
+    }
 
-	this.addPopupMenuCellItems(menu, cell, evt);
-	this.addPopupMenuSelectionItems(menu, cell, evt);
+    // Only add your custom context menu items if cell is not null and has an id
+    if (cell && cell.id) {
+        let contextOptions = getContextOptions(cell.id);
+        if (contextOptions.length > 0) {
+            menu.addSeparator();
+            contextOptions.forEach(option => {
+                menu.addItem(option.name, null, function() {
+                    option.action();
+                });
+            });
+			menu.addSeparator();
+        }
+    }
+
+    this.addPopupMenuCellItems(menu, cell, evt);
+    this.addPopupMenuSelectionItems(menu, cell, evt);
 };
+
+function getContextOptions(cellId) {
+    let {objectType, objectId } = getObjectTypeAndIdFromCellId(cellId);
+    let contextOptions = [];
+
+    if (objectType === 'l2businesscapabilities') {
+        contextOptions = [
+            'Load Parent Business Capability',
+            'Load Child Business Capabilities',
+            'Load Processes',
+            'Load Information Objects',
+            'Load Applications',            
+        ]
+    }
+    else if (objectType === 'processes') {
+        contextOptions = [
+            'Load Parent Process',
+            'Load Child Processes',
+            'Load Business Capabilities',
+            'Load Information Objects',
+            'Load Applications',
+        ]
+    }
+    else if (objectType === 'informationobjects') {
+        contextOptions = [
+            'Load Business Capabilities',
+            'Load Processes',
+            'Load Applications',
+        ]
+    }
+    else if (objectType === 'applications') {
+        contextOptions = [
+            'Load Parent Application',
+            'Load Child Applications',
+            'Load Business Capabilities',
+            'Load Processes',
+            'Load Information Objects',
+            'Load IT Components',
+			'Load Interfaced Applications',
+        ]
+    }
+    else if (objectType === 'itcomponents') {
+        contextOptions = [
+            'Load Applications',
+        ]
+    }
+    return contextOptions.map(option => ({
+        name: option,
+        action: () => {
+            if (window.parent) {
+                const eventData = {
+                    action: option,
+                    objectType: objectType,
+                    objectId: objectId
+                };
+                window.parent.postMessage({event: 'loadobjecttype', data: eventData}, '*');
+            }
+        }
+    }));
+}
+
+function getObjectTypeAndIdFromCellId(cellId) {
+    // These are the possible celltypes
+    const objectTypes = ['l2businesscapabilities', 'processes', 'informationobjects', 'applications', 'interfaces', 'itcomponents'];
+
+    // Find the matching cellType
+    const matchedType = objectTypes.find(type => cellId.includes(type));
+
+    if (matchedType) {
+        const objectType = matchedType;
+        const objectId = cellId.replace(objectType, '');
+        return { objectType, objectId };
+    } else {
+        return { objectType: 'unknown', objectId: cellId };
+    }
+}
 
 /**
  * Creates the keyboard event handler for the current graph and history.
